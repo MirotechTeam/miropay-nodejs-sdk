@@ -1,0 +1,34 @@
+{
+  "name": "@mp/payment-sdk",
+  "version": "0.0.1",
+  "description": "The NodeJS SDK for miropay",
+  "keywords": [
+    "mp",
+    "miropay",
+    "sdk",
+    "api",
+    "rest"
+  ],
+  "license": "ISC",
+  "author": "Mirotech",
+  "type": "commonjs",
+  "main": "dist/index.cjs",
+  "module": "dist/index.mjs",
+  "types": "dist/index.d.ts",
+  "exports": {
+    "require": "./dist/index.cjs",
+    "import": "./dist/index.mjs"
+  },
+  "scripts": {
+    "build": "tsup src/index.ts --format esm,cjs --dts"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.10",
+    "javascript-obfuscator": "^4.1.1",
+    "tsup": "^8.5.0",
+    "typescript": "^5.8.3"
+  },
+  "dependencies": {
+    "undici": "^7.11.0"
+  }
+}
