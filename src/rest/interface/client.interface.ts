@@ -17,6 +17,7 @@ export interface ICreatePayment {
   /** Max 255 characters */
   description: string;
 
+  redirectUrl: string;
   collectFeeFromCustomer: boolean;
   collectCustomerEmail: boolean;
   collectCustomerPhoneNumber: boolean;

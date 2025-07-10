@@ -76,6 +76,7 @@ export class PaymentRestClient {
     formData.append("gateways", payload.gateways);
     formData.append("title", payload.title);
     formData.append("description", payload.description);
+    formData.append("redirectUrl", payload.redirectUrl);
     formData.append("collectFeeFromCustomer", payload.collectFeeFromCustomer);
     formData.append("collectCustomerEmail", payload.collectCustomerEmail);
     formData.append(
@@ -93,19 +94,3 @@ export class PaymentRestClient {
     return this.__call(`/merchant/payment/internal/cancel/${id}`, "POST", null);
   }
 }
-
-const pvKey =
-  "-----BEGIN ENCRYPTED PRIVATE KEY-----\nMIGbMFcGCSqGSIb3DQEFDTBKMCkGCSqGSIb3DQEFDDAcBAgQlVzPX3gvjAICCAAw\nDAYIKoZIhvcNAgkFADAdBglghkgBZQMEASoEEKz5GXvEyaTt/vh9gGKsjPQEQE1P\n1SlTGa1/T5TB1f9baTLqKrShG/hMSa1tuL5qb5221XGkppGiP3in8zoZ2twna2hR\naScxcVX7P1JrpwD9ucY=\n-----END ENCRYPTED PRIVATE KEY-----\n";
-
-const secret = "test_ipstsF54V-pwrL_N14kaA_2Gy6o-vq7rA2nu7FOtvhc_SA";
-
-const prc = new PaymentRestClient(pvKey, secret, "http://localhost:3000");
-
-prc
-  .getById(1)
-  .then((v) => {
-    console.log(v);
-  })
-  .catch((e) => {
-    console.error(e);
-  });

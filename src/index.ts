@@ -1,1 +1,3 @@
-export * from "./rest/client";
+import { PaymentRestClient } from "./rest/client";
+
+export default PaymentRestClient;

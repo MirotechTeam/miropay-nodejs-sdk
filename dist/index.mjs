@@ -1,6 +1,7 @@
 // src/rest/client.ts
 import {
   Agent,
+  FormData,
   interceptors,
   Pool,
   request
@@ -48,7 +49,8 @@ var PaymentRestClient = class {
   upstreamVersion = 1;
   dispatcher;
   authenticator;
-  constructor(key, secret2, host) {
+  baseUrl = "";
+  constructor(key, secret, host) {
     this.dispatcher = new Agent({
       connectTimeout: 10 * 1e3,
       // 10 seconds
@@ -70,11 +72,12 @@ var PaymentRestClient = class {
         //seconds
       })
     );
-    this.authenticator = new PrivateKeyAuthenticator(key, secret2);
+    this.authenticator = new PrivateKeyAuthenticator(key, secret);
+    this.baseUrl = host;
   }
   async __call(path, verb, body) {
     const v = `/v${this.upstreamVersion}`;
-    const versionedUrl = v + path;
+    const versionedUrl = this.baseUrl + v + path;
     const signature = this.authenticator.makeSignature(verb, path);
     return request(versionedUrl, {
       dispatcher: this.dispatcher,
@@ -83,18 +86,41 @@ var PaymentRestClient = class {
       headers: { "x-signature": signature, "x-id": this.authenticator.keyId }
     });
   }
+  /**
+   * * Get payment by id
+   */
   async getById(id) {
-    return this.__call("/payment/rest/get", "GET", null);
+    return this.__call(`/merchant/payment/internal/${id}`, "GET", null);
+  }
+  /**
+   * * Create payment
+   */
+  async createPayment(payload) {
+    const formData = new FormData();
+    formData.append("amount", payload.amount);
+    formData.append("expirationDateTime", payload.expirationDateTime);
+    formData.append("gateways", payload.gateways);
+    formData.append("title", payload.title);
+    formData.append("description", payload.description);
+    formData.append("redirectUrl", payload.redirectUrl);
+    formData.append("collectFeeFromCustomer", payload.collectFeeFromCustomer);
+    formData.append("collectCustomerEmail", payload.collectCustomerEmail);
+    formData.append(
+      "collectCustomerPhoneNumber",
+      payload.collectCustomerPhoneNumber
+    );
+    return this.__call(`/merchant/payment/internal`, "POST", formData);
+  }
+  /**
+   * * Cancel payment
+   */
+  async cancelPayment(id) {
+    return this.__call(`/merchant/payment/internal/cancel/${id}`, "POST", null);
   }
 };
-var pvKey = "-----BEGIN ENCRYPTED PRIVATE KEY-----\nMIGbMFcGCSqGSIb3DQEFDTBKMCkGCSqGSIb3DQEFDDAcBAgQlVzPX3gvjAICCAAw\nDAYIKoZIhvcNAgkFADAdBglghkgBZQMEASoEEKz5GXvEyaTt/vh9gGKsjPQEQE1P\n1SlTGa1/T5TB1f9baTLqKrShG/hMSa1tuL5qb5221XGkppGiP3in8zoZ2twna2hR\naScxcVX7P1JrpwD9ucY=\n-----END ENCRYPTED PRIVATE KEY-----\n";
-var secret = "test_ipstsF54V-pwrL_N14kaA_2Gy6o-vq7rA2nu7FOtvhc_SA";
-var prc = new PaymentRestClient(pvKey, secret, "http://localhost:3000");
-prc.getById(1).then((v) => {
-  console.log(v);
-}).catch((e) => {
-  console.error(e);
-});
+
+// src/index.ts
+var index_default = PaymentRestClient;
 export {
-  PaymentRestClient
+  index_default as default
 };

@@ -6,7 +6,7 @@
     "forceConsistentCasingInFileNames": true,
     "strictBindCallApply": true,
     "noFallthroughCasesInSwitch": true,
-    "module": "ESNext",
+    "module": "CommonJs",
     "declaration": true,
     "declarationDir": "dist",
     "outDir": "dist",
