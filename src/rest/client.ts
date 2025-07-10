@@ -8,11 +8,13 @@ import {
 } from "undici";
 import { PrivateKeyAuthenticator } from "../core/auth";
 import type { Readable } from "stream";
+import { ICreatePayment } from "./interface/client.interface";
 
 export class PaymentRestClient {
   private readonly upstreamVersion: number = 1;
   private readonly dispatcher: Dispatcher;
   private readonly authenticator: PrivateKeyAuthenticator;
+  private readonly baseUrl: string = "";
 
   constructor(key: string, secret: string, host: string) {
     this.dispatcher = new Agent({
@@ -35,15 +37,17 @@ export class PaymentRestClient {
     );
 
     this.authenticator = new PrivateKeyAuthenticator(key, secret);
+
+    this.baseUrl = host;
   }
 
-  private async __call(
+  public async __call(
     path: string,
     verb: Dispatcher.HttpMethod,
     body: string | Buffer | Uint8Array | Readable | null | FormData
   ) {
     const v = `/v${this.upstreamVersion}`;
-    const versionedUrl = v + path;
+    const versionedUrl = this.baseUrl + v + path;
     const signature = this.authenticator.makeSignature(verb, path);
 
     return request(versionedUrl, {
@@ -54,8 +58,39 @@ export class PaymentRestClient {
     });
   }
 
+  /**
+   * * Get payment by id
+   */
   public async getById(id: string | number) {
-    return this.__call("/payment/rest/get", "GET", null);
+    return this.__call(`/merchant/payment/internal/${id}`, "GET", null);
+  }
+
+  /**
+   * * Create payment
+   */
+  public async createPayment(payload: ICreatePayment) {
+    const formData = new FormData();
+
+    formData.append("amount", payload.amount);
+    formData.append("expirationDateTime", payload.expirationDateTime);
+    formData.append("gateways", payload.gateways);
+    formData.append("title", payload.title);
+    formData.append("description", payload.description);
+    formData.append("collectFeeFromCustomer", payload.collectFeeFromCustomer);
+    formData.append("collectCustomerEmail", payload.collectCustomerEmail);
+    formData.append(
+      "collectCustomerPhoneNumber",
+      payload.collectCustomerPhoneNumber
+    );
+
+    return this.__call(`/merchant/payment/internal`, "POST", formData);
+  }
+
+  /**
+   * * Cancel payment
+   */
+  public async cancelPayment(id: string | number) {
+    return this.__call(`/merchant/payment/internal/cancel/${id}`, "POST", null);
   }
 }
 
