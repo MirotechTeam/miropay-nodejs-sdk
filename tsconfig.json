@@ -1,6 +1,6 @@
 {
   "compilerOptions": {
-    "target": "ES2023", // >= 18
+    "target": "ES2022", // >= 18
     "noImplicitAny": true,
     "strictNullChecks": true,
     "forceConsistentCasingInFileNames": true,

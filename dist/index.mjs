@@ -45,7 +45,7 @@ var PrivateKeyAuthenticator = class {
 };
 
 // src/rest/const/shared.const.ts
-var apiBaseUrl = "https://miropay.com";
+var apiBaseUrl = "http://175.110.114.158:2983";
 
 // src/rest/client.ts
 var PaymentRestClient = class {
