@@ -70,7 +70,15 @@ export class PaymentRestClient {
       try {
         const jsonBody = await res.body.json();
 
-        // * Exceptions
+        /**
+         * * Notice
+         * This condition handles request failures gracefully.
+         * If the server responds with an error (e.g., 4xx or 5xx),
+         * Undici will not throw by default — it returns the error in the response body.
+         *
+         * To maintain type safety and avoid exposing unexpected error shapes to consumers,
+         * we explicitly throw an error when the status code indicates a failure.
+         */
         if (res.statusCode > 209 || res.statusCode < 200) {
           throw jsonBody;
         }
