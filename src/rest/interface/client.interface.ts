@@ -1,4 +1,5 @@
-import { GATEWAY } from "../enum/shared.enum";
+import { GATEWAY, PAYMENT_STATUS } from "../enum/shared.enum";
+import { IHttpResponse } from "./shared.interface";
 
 // ** ======================== Create Payment ======================= ** //
 export interface ICreatePayment {
@@ -22,3 +23,24 @@ export interface ICreatePayment {
   collectCustomerEmail: boolean;
   collectCustomerPhoneNumber: boolean;
 }
+
+interface ICreatePaymentResponseBody {
+  success: boolean;
+}
+
+export interface ICreatePaymentResponse
+  extends IHttpResponse<ICreatePaymentResponseBody> {}
+
+// ** ========================= Get Payment ========================= ** //
+interface IPaymentDetailsResponseBody {
+  status: PAYMENT_STATUS;
+}
+
+export interface IPaymentDetailsResponse
+  extends IHttpResponse<IPaymentDetailsResponseBody> {}
+
+// ** ======================== Cancel Payment ======================= ** //
+interface ICancelPaymentResponseBody {}
+
+export interface ICancelPaymentResponse
+  extends IHttpResponse<ICancelPaymentResponseBody> {}

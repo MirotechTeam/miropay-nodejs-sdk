@@ -8,8 +8,14 @@ import {
 } from "undici";
 import { PrivateKeyAuthenticator } from "../core/auth";
 import type { Readable } from "stream";
-import { ICreatePayment } from "./interface/client.interface";
+import {
+  ICancelPaymentResponse,
+  ICreatePayment,
+  ICreatePaymentResponse,
+  IPaymentDetailsResponse,
+} from "./interface/client.interface";
 import { apiBaseUrl } from "./const/shared.const";
+import { IHttpResponse } from "./interface/shared.interface";
 
 export class PaymentRestClient {
   private readonly upstreamVersion: number = 1;
@@ -44,27 +50,35 @@ export class PaymentRestClient {
   /**
    * * Basic api call
    */
-  public async __call(
+  private async __call<T>(
     path: string,
     verb: Dispatcher.HttpMethod,
-    body: string | Buffer | Uint8Array | Readable | null | FormData
-  ) {
+    requestBody: string | Buffer | Uint8Array | Readable | null | FormData
+  ): Promise<IHttpResponse<T>> {
     const v = `/v${this.upstreamVersion}`;
     const versionedUrl = this.baseUrl + v + path;
     const signature = this.authenticator.makeSignature(verb, path);
 
-    return request(versionedUrl, {
+    const { body, headers, statusCode } = await request(versionedUrl, {
       dispatcher: this.dispatcher,
       method: verb,
-      body: body,
+      body: requestBody,
       headers: { "x-signature": signature, "x-id": this.authenticator.keyId },
     });
+
+    const jsonBody = await body.json();
+
+    return {
+      body: jsonBody as T,
+      headers,
+      statusCode,
+    };
   }
 
   /**
    * * Trim base url
    */
-  public __trimBaseUrl(hostName: string | undefined): string {
+  private __trimBaseUrl(hostName: string | undefined): string {
     const _https = "https://";
     const _http = "http://";
 
@@ -89,14 +103,18 @@ export class PaymentRestClient {
   /**
    * * Get payment by id
    */
-  public async getById(id: string | number) {
+  public async getPaymentById(
+    id: string | number
+  ): Promise<IPaymentDetailsResponse> {
     return this.__call(`/merchant/payment/internal/${id}`, "GET", null);
   }
 
   /**
    * * Create payment
    */
-  public async createPayment(payload: ICreatePayment) {
+  public async createPayment(
+    payload: ICreatePayment
+  ): Promise<ICreatePaymentResponse> {
     const formData = new FormData();
 
     formData.append("amount", payload.amount);
@@ -118,7 +136,9 @@ export class PaymentRestClient {
   /**
    * * Cancel payment
    */
-  public async cancelPayment(id: string | number) {
+  public async cancelPayment(
+    id: string | number
+  ): Promise<ICancelPaymentResponse> {
     return this.__call(`/merchant/payment/internal/cancel/${id}`, "POST", null);
   }
 }
