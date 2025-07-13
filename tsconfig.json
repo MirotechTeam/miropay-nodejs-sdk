@@ -1,12 +1,13 @@
 {
   "compilerOptions": {
-    "target": "ES2022", // >= 18
+    "target": "es2022",
+    "lib": ["ES2022", "DOM"],
     "noImplicitAny": true,
     "strictNullChecks": true,
     "forceConsistentCasingInFileNames": true,
     "strictBindCallApply": true,
     "noFallthroughCasesInSwitch": true,
-    "module": "CommonJs",
+    "module": "commonjs",
     "declaration": true,
     "declarationDir": "dist",
     "outDir": "dist",

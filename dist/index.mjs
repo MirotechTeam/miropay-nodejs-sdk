@@ -81,16 +81,31 @@ var PaymentRestClient = class {
   /**
    * * Basic api call
    */
-  async __call(path, verb, body) {
+  async __call(path, verb, requestBody) {
     const v = `/v${this.upstreamVersion}`;
     const versionedUrl = this.baseUrl + v + path;
     const signature = this.authenticator.makeSignature(verb, path);
-    return request(versionedUrl, {
-      dispatcher: this.dispatcher,
-      method: verb,
-      body,
-      headers: { "x-signature": signature, "x-id": this.authenticator.keyId }
-    });
+    try {
+      const res = await request(versionedUrl, {
+        dispatcher: this.dispatcher,
+        method: verb,
+        body: requestBody,
+        headers: { "x-signature": signature, "x-id": this.authenticator.keyId }
+      });
+      try {
+        const jsonBody = await res.body.json();
+        return {
+          data: {},
+          body: jsonBody,
+          headers: res.headers,
+          statusCode: res.statusCode
+        };
+      } catch (parseError) {
+        throw parseError;
+      }
+    } catch (err) {
+      throw err;
+    }
   }
   /**
    * * Trim base url
@@ -112,7 +127,7 @@ var PaymentRestClient = class {
   /**
    * * Get payment by id
    */
-  async getById(id) {
+  async getPaymentById(id) {
     return this.__call(`/merchant/payment/internal/${id}`, "GET", null);
   }
   /**
@@ -142,8 +157,26 @@ var PaymentRestClient = class {
   }
 };
 
+// src/rest/enum/shared.enum.ts
+var GATEWAY = /* @__PURE__ */ ((GATEWAY2) => {
+  GATEWAY2["ZAIN"] = "ZAIN";
+  GATEWAY2["FIB"] = "FIB";
+  return GATEWAY2;
+})(GATEWAY || {});
+var PAYMENT_STATUS = /* @__PURE__ */ ((PAYMENT_STATUS2) => {
+  PAYMENT_STATUS2["TIMED_OUT"] = "TIMED_OUT";
+  PAYMENT_STATUS2["PENDING"] = "PENDING";
+  PAYMENT_STATUS2["PAID"] = "PAID";
+  PAYMENT_STATUS2["CANCELED"] = "CANCELED";
+  PAYMENT_STATUS2["FAILED"] = "FAILED";
+  PAYMENT_STATUS2["SETTLED"] = "SETTLED";
+  return PAYMENT_STATUS2;
+})(PAYMENT_STATUS || {});
+
 // src/index.ts
 var index_default = PaymentRestClient;
 export {
+  GATEWAY,
+  PAYMENT_STATUS,
   index_default as default
 };

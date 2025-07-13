@@ -1,9 +1,23 @@
-import { Dispatcher, FormData } from 'undici';
-import { Readable } from 'stream';
+import { IncomingHttpHeaders } from 'undici/types/header';
 
 declare enum GATEWAY {
     ZAIN = "ZAIN",
     FIB = "FIB"
+}
+declare enum PAYMENT_STATUS {
+    TIMED_OUT = "TIMED_OUT",
+    PENDING = "PENDING",
+    PAID = "PAID",
+    CANCELED = "CANCELED",
+    FAILED = "FAILED",
+    SETTLED = "SETTLED"
+}
+
+interface IHttpResponse<T> {
+    data: T;
+    body: Record<any, any>;
+    headers: IncomingHttpHeaders;
+    statusCode: number;
 }
 
 interface ICreatePayment {
@@ -22,6 +36,20 @@ interface ICreatePayment {
     collectCustomerEmail: boolean;
     collectCustomerPhoneNumber: boolean;
 }
+interface ICreatePaymentResponseBody {
+    success: boolean;
+}
+interface ICreatePaymentResponse extends IHttpResponse<ICreatePaymentResponseBody> {
+}
+interface IPaymentDetailsResponseBody {
+    status: PAYMENT_STATUS;
+}
+interface IPaymentDetailsResponse extends IHttpResponse<IPaymentDetailsResponseBody> {
+}
+interface ICancelPaymentResponseBody {
+}
+interface ICancelPaymentResponse extends IHttpResponse<ICancelPaymentResponseBody> {
+}
 
 declare class PaymentRestClient {
     private readonly upstreamVersion;
@@ -32,23 +60,23 @@ declare class PaymentRestClient {
     /**
      * * Basic api call
      */
-    __call(path: string, verb: Dispatcher.HttpMethod, body: string | Buffer | Uint8Array | Readable | null | FormData): Promise<Dispatcher.ResponseData<null>>;
+    private __call;
     /**
      * * Trim base url
      */
-    __trimBaseUrl(hostName: string | undefined): string;
+    private __trimBaseUrl;
     /**
      * * Get payment by id
      */
-    getById(id: string | number): Promise<Dispatcher.ResponseData<null>>;
+    getPaymentById(id: string | number): Promise<IPaymentDetailsResponse>;
     /**
      * * Create payment
      */
-    createPayment(payload: ICreatePayment): Promise<Dispatcher.ResponseData<null>>;
+    createPayment(payload: ICreatePayment): Promise<ICreatePaymentResponse>;
     /**
      * * Cancel payment
      */
-    cancelPayment(id: string | number): Promise<Dispatcher.ResponseData<null>>;
+    cancelPayment(id: string | number): Promise<ICancelPaymentResponse>;
 }
 
-export { PaymentRestClient as default };
+export { GATEWAY, type ICancelPaymentResponse, type ICreatePayment, type ICreatePaymentResponse, type IPaymentDetailsResponse, PAYMENT_STATUS, PaymentRestClient as default };

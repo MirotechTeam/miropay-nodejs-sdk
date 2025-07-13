@@ -59,20 +59,29 @@ export class PaymentRestClient {
     const versionedUrl = this.baseUrl + v + path;
     const signature = this.authenticator.makeSignature(verb, path);
 
-    const { body, headers, statusCode } = await request(versionedUrl, {
-      dispatcher: this.dispatcher,
-      method: verb,
-      body: requestBody,
-      headers: { "x-signature": signature, "x-id": this.authenticator.keyId },
-    });
+    try {
+      const res = await request(versionedUrl, {
+        dispatcher: this.dispatcher,
+        method: verb,
+        body: requestBody,
+        headers: { "x-signature": signature, "x-id": this.authenticator.keyId },
+      });
 
-    const jsonBody = await body.json();
+      try {
+        const jsonBody = await res.body.json();
 
-    return {
-      body: jsonBody as T,
-      headers,
-      statusCode,
-    };
+        return {
+          data: {} as T,
+          body: jsonBody as Record<any, any>,
+          headers: res.headers,
+          statusCode: res.statusCode,
+        };
+      } catch (parseError) {
+        throw parseError;
+      }
+    } catch (err) {
+      throw err;
+    }
   }
 
   /**

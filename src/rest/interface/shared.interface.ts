@@ -2,7 +2,8 @@ import { IncomingHttpHeaders } from "undici/types/header";
 
 // ** ============================= Http ============================ ** //
 export interface IHttpResponse<T> {
-  body: T;
+  data: T;
+  body: Record<any, any>;
   headers: IncomingHttpHeaders;
   statusCode: number;
 }
