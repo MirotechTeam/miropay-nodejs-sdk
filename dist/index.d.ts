@@ -14,8 +14,7 @@ declare enum PAYMENT_STATUS {
 }
 
 interface IHttpResponse<T> {
-    data: T;
-    body: Record<any, any>;
+    body: T;
     headers: IncomingHttpHeaders;
     statusCode: number;
 }

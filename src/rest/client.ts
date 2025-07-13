@@ -70,6 +70,11 @@ export class PaymentRestClient {
       try {
         const jsonBody = await res.body.json();
 
+        // * Exceptions
+        if (res.statusCode > 209 || res.statusCode < 200) {
+          throw jsonBody;
+        }
+
         return {
           body: jsonBody as T,
           headers: res.headers,

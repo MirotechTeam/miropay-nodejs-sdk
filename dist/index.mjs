@@ -94,8 +94,10 @@ var PaymentRestClient = class {
       });
       try {
         const jsonBody = await res.body.json();
+        if (res.statusCode > 209 || res.statusCode < 200) {
+          throw jsonBody;
+        }
         return {
-          data: {},
           body: jsonBody,
           headers: res.headers,
           statusCode: res.statusCode
