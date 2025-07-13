@@ -9,14 +9,15 @@ import {
 import { PrivateKeyAuthenticator } from "../core/auth";
 import type { Readable } from "stream";
 import { ICreatePayment } from "./interface/client.interface";
+import { apiBaseUrl } from "./const/shared.const";
 
 export class PaymentRestClient {
   private readonly upstreamVersion: number = 1;
   private readonly dispatcher: Dispatcher;
   private readonly authenticator: PrivateKeyAuthenticator;
-  private readonly baseUrl: string = "";
+  private readonly baseUrl: string = apiBaseUrl;
 
-  constructor(key: string, secret: string, host: string) {
+  constructor(key: string, secret: string) {
     this.dispatcher = new Agent({
       connectTimeout: 10 * 1000, // 10 seconds
       factory: (_origin: string, opts: Agent.Options): Dispatcher => {
@@ -37,10 +38,12 @@ export class PaymentRestClient {
     );
 
     this.authenticator = new PrivateKeyAuthenticator(key, secret);
-
-    this.baseUrl = host;
   }
 
+  // ** ======================== Basic Methods ======================== ** //
+  /**
+   * * Basic api call
+   */
   public async __call(
     path: string,
     verb: Dispatcher.HttpMethod,
@@ -56,6 +59,31 @@ export class PaymentRestClient {
       body: body,
       headers: { "x-signature": signature, "x-id": this.authenticator.keyId },
     });
+  }
+
+  /**
+   * * Trim base url
+   */
+  public __trimBaseUrl(hostName: string | undefined): string {
+    const _https = "https://";
+    const _http = "http://";
+
+    // * Parameter host, is optional.
+    if (!hostName) return this.baseUrl;
+
+    // * Handle protocol.
+    if (!hostName.startsWith(_https)) {
+      if (hostName.startsWith(_http)) {
+        // * Force https
+        hostName = hostName.replace(/^http:\/\//, _https);
+      } else hostName = `${_https}${hostName}`;
+    }
+
+    // * Handle the ending
+    if (hostName.endsWith("/")) {
+      return hostName.slice(0, -1); // Slice last `/`.
+    }
+    return hostName;
   }
 
   /**

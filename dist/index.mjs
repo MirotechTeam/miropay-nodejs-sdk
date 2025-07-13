@@ -44,13 +44,16 @@ var PrivateKeyAuthenticator = class {
   }
 };
 
+// src/rest/const/shared.const.ts
+var apiBaseUrl = "https://miropay.com";
+
 // src/rest/client.ts
 var PaymentRestClient = class {
   upstreamVersion = 1;
   dispatcher;
   authenticator;
-  baseUrl = "";
-  constructor(key, secret, host) {
+  baseUrl = apiBaseUrl;
+  constructor(key, secret) {
     this.dispatcher = new Agent({
       connectTimeout: 10 * 1e3,
       // 10 seconds
@@ -73,8 +76,11 @@ var PaymentRestClient = class {
       })
     );
     this.authenticator = new PrivateKeyAuthenticator(key, secret);
-    this.baseUrl = host;
   }
+  // ** ======================== Basic Methods ======================== ** //
+  /**
+   * * Basic api call
+   */
   async __call(path, verb, body) {
     const v = `/v${this.upstreamVersion}`;
     const versionedUrl = this.baseUrl + v + path;
@@ -85,6 +91,23 @@ var PaymentRestClient = class {
       body,
       headers: { "x-signature": signature, "x-id": this.authenticator.keyId }
     });
+  }
+  /**
+   * * Trim base url
+   */
+  __trimBaseUrl(hostName) {
+    const _https = "https://";
+    const _http = "http://";
+    if (!hostName) return this.baseUrl;
+    if (!hostName.startsWith(_https)) {
+      if (hostName.startsWith(_http)) {
+        hostName = hostName.replace(/^http:\/\//, _https);
+      } else hostName = `${_https}${hostName}`;
+    }
+    if (hostName.endsWith("/")) {
+      return hostName.slice(0, -1);
+    }
+    return hostName;
   }
   /**
    * * Get payment by id

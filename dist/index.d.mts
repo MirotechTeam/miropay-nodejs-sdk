@@ -28,8 +28,15 @@ declare class PaymentRestClient {
     private readonly dispatcher;
     private readonly authenticator;
     private readonly baseUrl;
-    constructor(key: string, secret: string, host: string);
+    constructor(key: string, secret: string);
+    /**
+     * * Basic api call
+     */
     __call(path: string, verb: Dispatcher.HttpMethod, body: string | Buffer | Uint8Array | Readable | null | FormData): Promise<Dispatcher.ResponseData<null>>;
+    /**
+     * * Trim base url
+     */
+    __trimBaseUrl(hostName: string | undefined): string;
     /**
      * * Get payment by id
      */
