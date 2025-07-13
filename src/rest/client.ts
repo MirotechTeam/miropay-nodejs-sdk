@@ -71,8 +71,7 @@ export class PaymentRestClient {
         const jsonBody = await res.body.json();
 
         return {
-          data: {} as T,
-          body: jsonBody as Record<any, any>,
+          body: jsonBody as T,
           headers: res.headers,
           statusCode: res.statusCode,
         };
