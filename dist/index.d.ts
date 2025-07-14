@@ -22,8 +22,6 @@ interface IHttpResponse<T> {
 interface ICreatePayment {
     /** Price as string, e.g. "1000" */
     amount: string;
-    /** Expiration datetime as JS Date object */
-    expirationDateTime: Date;
     /** List of allowed gateways; empty array means all are allowed */
     gateways: GATEWAY[];
     /** Max 63 characters */
@@ -55,6 +53,7 @@ declare class PaymentRestClient {
     private readonly dispatcher;
     private readonly authenticator;
     private readonly baseUrl;
+    private readonly isTest;
     constructor(key: string, secret: string);
     /**
      * * Basic api call
@@ -65,9 +64,13 @@ declare class PaymentRestClient {
      */
     private __trimBaseUrl;
     /**
+     *
+     */
+    private checkIsTest;
+    /**
      * * Get payment by id
      */
-    getPaymentById(id: string | number): Promise<IPaymentDetailsResponse>;
+    getPaymentById(referenceCode: string): Promise<IPaymentDetailsResponse>;
     /**
      * * Create payment
      */
@@ -75,7 +78,7 @@ declare class PaymentRestClient {
     /**
      * * Cancel payment
      */
-    cancelPayment(id: string | number): Promise<ICancelPaymentResponse>;
+    cancelPayment(referenceCode: string): Promise<ICancelPaymentResponse>;
 }
 
 export { GATEWAY, type ICancelPaymentResponse, type ICreatePayment, type ICreatePaymentResponse, type IPaymentDetailsResponse, PAYMENT_STATUS, PaymentRestClient as default };

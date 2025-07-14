@@ -6,9 +6,6 @@ export interface ICreatePayment {
   /** Price as string, e.g. "1000" */
   amount: string;
 
-  /** Expiration datetime as JS Date object */
-  expirationDateTime: Date;
-
   /** List of allowed gateways; empty array means all are allowed */
   gateways: GATEWAY[];
 

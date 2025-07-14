@@ -1,7 +1,6 @@
 // src/rest/client.ts
 import {
   Agent,
-  FormData,
   interceptors,
   Pool,
   request
@@ -18,8 +17,8 @@ var PrivateKeyAuthenticator = class {
     this._secret = _secret;
   }
   // ** =========================== Methods =========================== ** //
-  makeSignature(method, relativeUrl) {
-    const rawSign = `${method} || ${this.secret} || ${relativeUrl}`;
+  makeSignature(method, relativeUrl, payload) {
+    const rawSign = `${method} || ${this.secret} || ${relativeUrl} || ${payload}`;
     const bufSign = Buffer.from(rawSign, "base64");
     return sign(null, bufSign, {
       key: this.encryptedPvKey,
@@ -45,7 +44,7 @@ var PrivateKeyAuthenticator = class {
 };
 
 // src/rest/const/shared.const.ts
-var apiBaseUrl = "http://175.110.114.158:2983";
+var apiBaseUrl = "http://localhost:3000";
 
 // src/rest/client.ts
 var PaymentRestClient = class {
@@ -53,6 +52,7 @@ var PaymentRestClient = class {
   dispatcher;
   authenticator;
   baseUrl = apiBaseUrl;
+  isTest = true;
   constructor(key, secret) {
     this.dispatcher = new Agent({
       connectTimeout: 10 * 1e3,
@@ -68,7 +68,7 @@ var PaymentRestClient = class {
       }
     }).compose(
       interceptors.dns({ affinity: 4 }),
-      interceptors.retry({ maxRetries: 3 }),
+      interceptors.retry({ maxRetries: 2 }),
       interceptors.cache({
         methods: ["GET", "HEAD", "OPTIONS"],
         cacheByDefault: 5
@@ -76,6 +76,7 @@ var PaymentRestClient = class {
       })
     );
     this.authenticator = new PrivateKeyAuthenticator(key, secret);
+    this.isTest = this.checkIsTest(secret);
   }
   // ** ======================== Basic Methods ======================== ** //
   /**
@@ -83,14 +84,23 @@ var PaymentRestClient = class {
    */
   async __call(path, verb, requestBody) {
     const v = `/v${this.upstreamVersion}`;
-    const versionedUrl = this.baseUrl + v + path;
-    const signature = this.authenticator.makeSignature(verb, path);
+    const relativeUrl = `${v}/payment/rest/${this.isTest ? "test" : "live"}${path}`;
+    const versionedUrl = `${this.baseUrl}${relativeUrl}`;
+    const signature = this.authenticator.makeSignature(
+      verb,
+      relativeUrl,
+      JSON.stringify(requestBody ?? "")
+    );
     try {
       const res = await request(versionedUrl, {
         dispatcher: this.dispatcher,
         method: verb,
         body: requestBody,
-        headers: { "x-signature": signature, "x-id": this.authenticator.keyId }
+        headers: {
+          "x-signature": signature,
+          "x-id": this.authenticator.keyId,
+          "Content-Type": "application/json"
+        }
       });
       try {
         const jsonBody = await res.body.json();
@@ -127,35 +137,39 @@ var PaymentRestClient = class {
     return hostName;
   }
   /**
+   *
+   */
+  checkIsTest(secret) {
+    return secret.includes("test");
+  }
+  /**
    * * Get payment by id
    */
-  async getPaymentById(id) {
-    return this.__call(`/merchant/payment/internal/${id}`, "GET", null);
+  async getPaymentById(referenceCode) {
+    return this.__call(`/status/${referenceCode}`, "GET", null);
   }
   /**
    * * Create payment
    */
   async createPayment(payload) {
-    const formData = new FormData();
-    formData.append("amount", payload.amount);
-    formData.append("expirationDateTime", payload.expirationDateTime);
-    formData.append("gateways", payload.gateways);
-    formData.append("title", payload.title);
-    formData.append("description", payload.description);
-    formData.append("redirectUrl", payload.redirectUrl);
-    formData.append("collectFeeFromCustomer", payload.collectFeeFromCustomer);
-    formData.append("collectCustomerEmail", payload.collectCustomerEmail);
-    formData.append(
-      "collectCustomerPhoneNumber",
-      payload.collectCustomerPhoneNumber
-    );
-    return this.__call(`/merchant/payment/internal`, "POST", formData);
+    const jsonPayload = {
+      amount: payload.amount,
+      gateways: payload.gateways,
+      // already an array, no need to stringify
+      title: payload.title,
+      description: payload.description,
+      redirectUrl: payload.redirectUrl,
+      collectFeeFromCustomer: payload.collectFeeFromCustomer,
+      collectCustomerEmail: payload.collectCustomerEmail,
+      collectCustomerPhoneNumber: payload.collectCustomerPhoneNumber
+    };
+    return this.__call(`/create`, "POST", JSON.stringify(jsonPayload));
   }
   /**
    * * Cancel payment
    */
-  async cancelPayment(id) {
-    return this.__call(`/merchant/payment/internal/cancel/${id}`, "POST", null);
+  async cancelPayment(referenceCode) {
+    return this.__call(`/cancel/${referenceCode}`, "PATCH", null);
   }
 };
 

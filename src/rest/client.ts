@@ -22,6 +22,7 @@ export class PaymentRestClient {
   private readonly dispatcher: Dispatcher;
   private readonly authenticator: PrivateKeyAuthenticator;
   private readonly baseUrl: string = apiBaseUrl;
+  private readonly isTest: boolean = true;
 
   constructor(key: string, secret: string) {
     this.dispatcher = new Agent({
@@ -36,7 +37,7 @@ export class PaymentRestClient {
       },
     }).compose(
       interceptors.dns({ affinity: 4 }),
-      interceptors.retry({ maxRetries: 3 }),
+      interceptors.retry({ maxRetries: 2 }),
       interceptors.cache({
         methods: ["GET", "HEAD", "OPTIONS"],
         cacheByDefault: 5, //seconds
@@ -44,6 +45,7 @@ export class PaymentRestClient {
     );
 
     this.authenticator = new PrivateKeyAuthenticator(key, secret);
+    this.isTest = this.checkIsTest(secret);
   }
 
   // ** ======================== Basic Methods ======================== ** //
@@ -56,15 +58,27 @@ export class PaymentRestClient {
     requestBody: string | Buffer | Uint8Array | Readable | null | FormData
   ): Promise<IHttpResponse<T>> {
     const v = `/v${this.upstreamVersion}`;
-    const versionedUrl = this.baseUrl + v + path;
-    const signature = this.authenticator.makeSignature(verb, path);
+    const relativeUrl = `${v}/payment/rest/${
+      this.isTest ? "test" : "live"
+    }${path}`;
+    const versionedUrl = `${this.baseUrl}${relativeUrl}`;
+
+    const signature = this.authenticator.makeSignature(
+      verb,
+      relativeUrl,
+      JSON.stringify(requestBody ?? "")
+    );
 
     try {
       const res = await request(versionedUrl, {
         dispatcher: this.dispatcher,
         method: verb,
         body: requestBody,
-        headers: { "x-signature": signature, "x-id": this.authenticator.keyId },
+        headers: {
+          "x-signature": signature,
+          "x-id": this.authenticator.keyId,
+          "Content-Type": "application/json",
+        },
       });
 
       try {
@@ -122,12 +136,19 @@ export class PaymentRestClient {
   }
 
   /**
+   *
+   */
+  private checkIsTest(secret: string): boolean {
+    return secret.includes("test");
+  }
+
+  /**
    * * Get payment by id
    */
   public async getPaymentById(
-    id: string | number
+    referenceCode: string
   ): Promise<IPaymentDetailsResponse> {
-    return this.__call(`/merchant/payment/internal/${id}`, "GET", null);
+    return this.__call(`/status/${referenceCode}`, "GET", null);
   }
 
   /**
@@ -136,30 +157,26 @@ export class PaymentRestClient {
   public async createPayment(
     payload: ICreatePayment
   ): Promise<ICreatePaymentResponse> {
-    const formData = new FormData();
+    const jsonPayload = {
+      amount: payload.amount,
+      gateways: payload.gateways, // already an array, no need to stringify
+      title: payload.title,
+      description: payload.description,
+      redirectUrl: payload.redirectUrl,
+      collectFeeFromCustomer: payload.collectFeeFromCustomer,
+      collectCustomerEmail: payload.collectCustomerEmail,
+      collectCustomerPhoneNumber: payload.collectCustomerPhoneNumber,
+    };
 
-    formData.append("amount", payload.amount);
-    formData.append("expirationDateTime", payload.expirationDateTime);
-    formData.append("gateways", payload.gateways);
-    formData.append("title", payload.title);
-    formData.append("description", payload.description);
-    formData.append("redirectUrl", payload.redirectUrl);
-    formData.append("collectFeeFromCustomer", payload.collectFeeFromCustomer);
-    formData.append("collectCustomerEmail", payload.collectCustomerEmail);
-    formData.append(
-      "collectCustomerPhoneNumber",
-      payload.collectCustomerPhoneNumber
-    );
-
-    return this.__call(`/merchant/payment/internal`, "POST", formData);
+    return this.__call(`/create`, "POST", JSON.stringify(jsonPayload));
   }
 
   /**
    * * Cancel payment
    */
   public async cancelPayment(
-    id: string | number
+    referenceCode: string
   ): Promise<ICancelPaymentResponse> {
-    return this.__call(`/merchant/payment/internal/cancel/${id}`, "POST", null);
+    return this.__call(`/cancel/${referenceCode}`, "PATCH", null);
   }
 }
