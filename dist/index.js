@@ -112,7 +112,7 @@ var PaymentRestClient = class {
     const signature = this.authenticator.makeSignature(
       verb,
       relativeUrl,
-      JSON.stringify(requestBody ?? "")
+      requestBody ?? {}
     );
     try {
       const res = await (0, import_undici.request)(versionedUrl, {
