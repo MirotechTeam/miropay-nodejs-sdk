@@ -66,7 +66,7 @@ export class PaymentRestClient {
     const signature = this.authenticator.makeSignature(
       verb,
       relativeUrl,
-      JSON.stringify(requestBody ?? "")
+      requestBody ?? {}
     );
 
     try {
