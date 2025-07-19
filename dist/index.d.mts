@@ -34,16 +34,35 @@ interface ICreatePayment {
     collectCustomerPhoneNumber: boolean;
 }
 interface ICreatePaymentResponseBody {
-    success: boolean;
+    referenceCode: string;
+    amount: string;
+    paidVia: string | null;
+    paidAt: string | null;
+    redirectUrl: string;
+    status: PAYMENT_STATUS;
+    payoutAmount: string | null;
 }
 interface ICreatePaymentResponse extends IHttpResponse<ICreatePaymentResponseBody> {
 }
 interface IPaymentDetailsResponseBody {
+    referenceCode: string;
+    amount: string;
+    paidVia: string | null;
+    paidAt: string | null;
+    redirectUrl: string;
     status: PAYMENT_STATUS;
+    payoutAmount: string | null;
 }
 interface IPaymentDetailsResponse extends IHttpResponse<IPaymentDetailsResponseBody> {
 }
 interface ICancelPaymentResponseBody {
+    referenceCode: string;
+    amount: string;
+    paidVia: string | null;
+    paidAt: string | null;
+    redirectUrl: string;
+    status: PAYMENT_STATUS;
+    payoutAmount: string | null;
 }
 interface ICancelPaymentResponse extends IHttpResponse<ICancelPaymentResponseBody> {
 }

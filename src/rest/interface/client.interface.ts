@@ -22,7 +22,13 @@ export interface ICreatePayment {
 }
 
 interface ICreatePaymentResponseBody {
-  success: boolean;
+  referenceCode: string;
+  amount: string;
+  paidVia: string | null;
+  paidAt: string | null;
+  redirectUrl: string;
+  status: PAYMENT_STATUS;
+  payoutAmount: string | null;
 }
 
 export interface ICreatePaymentResponse
@@ -30,14 +36,28 @@ export interface ICreatePaymentResponse
 
 // ** ========================= Get Payment ========================= ** //
 interface IPaymentDetailsResponseBody {
+  referenceCode: string;
+  amount: string;
+  paidVia: string | null;
+  paidAt: string | null;
+  redirectUrl: string;
   status: PAYMENT_STATUS;
+  payoutAmount: string | null;
 }
 
 export interface IPaymentDetailsResponse
   extends IHttpResponse<IPaymentDetailsResponseBody> {}
 
 // ** ======================== Cancel Payment ======================= ** //
-interface ICancelPaymentResponseBody {}
+interface ICancelPaymentResponseBody {
+  referenceCode: string;
+  amount: string;
+  paidVia: string | null;
+  paidAt: string | null;
+  redirectUrl: string;
+  status: PAYMENT_STATUS;
+  payoutAmount: string | null;
+}
 
 export interface ICancelPaymentResponse
   extends IHttpResponse<ICancelPaymentResponseBody> {}
