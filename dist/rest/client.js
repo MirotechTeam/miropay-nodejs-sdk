@@ -21,7 +21,7 @@ class PaymentRestClient {
                     clientTtl: 30 * 1000, // 30 seconds
                 });
             },
-        }).compose(undici_1.interceptors.dns({ affinity: 4 }), undici_1.interceptors.retry({ maxRetries: 3 }), undici_1.interceptors.cache({
+        }).compose(undici_1.interceptors.dns({ affinity: 4 }), undici_1.interceptors.retry({ maxRetries: 2 }), undici_1.interceptors.cache({
             methods: ["GET", "HEAD", "OPTIONS"],
             cacheByDefault: 5, //seconds
         }));
@@ -36,7 +36,7 @@ class PaymentRestClient {
         const v = `/v${this.upstreamVersion}`;
         const relativeUrl = `${v}/payment/rest/${this.isTest ? "test" : "live"}${path}`;
         const versionedUrl = `${this.baseUrl}${relativeUrl}`;
-        const signature = this.authenticator.makeSignature(verb, relativeUrl);
+        const signature = this.authenticator.makeSignature(verb, relativeUrl, requestBody ?? "{}");
         try {
             const res = await (0, undici_1.request)(versionedUrl, {
                 dispatcher: this.dispatcher,
@@ -132,7 +132,7 @@ class PaymentRestClient {
      * * Cancel payment
      */
     async cancelPayment(referenceCode) {
-        return this.__call(`/cancel/${referenceCode}`, "POST", null);
+        return this.__call(`/cancel/${referenceCode}`, "PATCH", null);
     }
 }
 exports.PaymentRestClient = PaymentRestClient;

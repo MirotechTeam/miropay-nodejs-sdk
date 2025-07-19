@@ -44,7 +44,7 @@ var PrivateKeyAuthenticator = class {
 };
 
 // src/rest/const/shared.const.ts
-var apiBaseUrl = "http://175.110.114.158:2983";
+var apiBaseUrl = "http://localhost:3000";
 
 // src/rest/client.ts
 var PaymentRestClient = class {
@@ -89,7 +89,7 @@ var PaymentRestClient = class {
     const signature = this.authenticator.makeSignature(
       verb,
       relativeUrl,
-      requestBody ?? {}
+      requestBody ?? "{}"
     );
     try {
       const res = await request(versionedUrl, {
