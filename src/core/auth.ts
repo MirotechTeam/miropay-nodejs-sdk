@@ -16,12 +16,14 @@ export class PrivateKeyAuthenticator implements IAuthenticator {
     payload: object | string
   ): string {
     const rawSign = `${method} || ${this.secret} || ${relativeUrl} || ${payload}`;
-    const bufSign = Buffer.from(rawSign, "base64");
+    const bufSign = Buffer.from(rawSign);
 
-    return sign(null, bufSign, {
+    const signResult = sign(null, bufSign, {
       key: this.encryptedPvKey,
       passphrase: this.secret,
-    }).toString("base64");
+    });
+
+    return signResult.toString("base64");
   }
 
   public get keyId(): string {

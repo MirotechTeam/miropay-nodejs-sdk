@@ -69,16 +69,18 @@ export class PaymentRestClient {
       requestBody ?? "{}"
     );
 
+    const headers = {
+      "x-signature": signature,
+      "x-id": this.authenticator.keyId,
+      "Content-Type": "application/json",
+    };
+
     try {
       const res = await request(versionedUrl, {
         dispatcher: this.dispatcher,
         method: verb,
         body: requestBody,
-        headers: {
-          "x-signature": signature,
-          "x-id": this.authenticator.keyId,
-          "Content-Type": "application/json",
-        },
+        headers: headers,
       });
 
       try {

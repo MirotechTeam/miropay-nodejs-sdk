@@ -19,11 +19,12 @@ var PrivateKeyAuthenticator = class {
   // ** =========================== Methods =========================== ** //
   makeSignature(method, relativeUrl, payload) {
     const rawSign = `${method} || ${this.secret} || ${relativeUrl} || ${payload}`;
-    const bufSign = Buffer.from(rawSign, "base64");
-    return sign(null, bufSign, {
+    const bufSign = Buffer.from(rawSign);
+    const signResult = sign(null, bufSign, {
       key: this.encryptedPvKey,
       passphrase: this.secret
-    }).toString("base64");
+    });
+    return signResult.toString("base64");
   }
   get keyId() {
     return this._secret;
@@ -91,16 +92,17 @@ var PaymentRestClient = class {
       relativeUrl,
       requestBody ?? "{}"
     );
+    const headers = {
+      "x-signature": signature,
+      "x-id": this.authenticator.keyId,
+      "Content-Type": "application/json"
+    };
     try {
       const res = await request(versionedUrl, {
         dispatcher: this.dispatcher,
         method: verb,
         body: requestBody,
-        headers: {
-          "x-signature": signature,
-          "x-id": this.authenticator.keyId,
-          "Content-Type": "application/json"
-        }
+        headers
       });
       try {
         const jsonBody = await res.body.json();
