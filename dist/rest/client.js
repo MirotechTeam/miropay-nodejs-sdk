@@ -37,16 +37,17 @@ class PaymentRestClient {
         const relativeUrl = `${v}/payment/rest/${this.isTest ? "test" : "live"}${path}`;
         const versionedUrl = `${this.baseUrl}${relativeUrl}`;
         const signature = this.authenticator.makeSignature(verb, relativeUrl, requestBody ?? "{}");
+        const headers = {
+            "x-signature": signature,
+            "x-id": this.authenticator.keyId,
+            "Content-Type": "application/json",
+        };
         try {
             const res = await (0, undici_1.request)(versionedUrl, {
                 dispatcher: this.dispatcher,
                 method: verb,
                 body: requestBody,
-                headers: {
-                    "x-signature": signature,
-                    "x-id": this.authenticator.keyId,
-                    "Content-Type": "application/json",
-                },
+                headers: headers,
             });
             try {
                 const jsonBody = await res.body.json();
@@ -107,6 +108,13 @@ class PaymentRestClient {
         return secret.includes("test");
     }
     /**
+     * * Get public keys
+     */
+    async getPublicKeys() {
+        return this.__call("/get-public-keys", "GET", null);
+    }
+    // ** ======================== Public Methods ======================= ** //
+    /**
      * * Get payment by id
      */
     async getPaymentById(referenceCode) {
@@ -121,7 +129,7 @@ class PaymentRestClient {
             gateways: payload.gateways, // already an array, no need to stringify
             title: payload.title,
             description: payload.description,
-            redirectUrl: payload.redirectUrl,
+            callbackUrl: payload.callbackUrl,
             collectFeeFromCustomer: payload.collectFeeFromCustomer,
             collectCustomerEmail: payload.collectCustomerEmail,
             collectCustomerPhoneNumber: payload.collectCustomerPhoneNumber,
@@ -133,6 +141,14 @@ class PaymentRestClient {
      */
     async cancelPayment(referenceCode) {
         return this.__call(`/cancel/${referenceCode}`, "PATCH", null);
+    }
+    /**
+     * * Verify
+     */
+    async verify() {
+        const { body } = await this.getPublicKeys();
+        console.log(body);
+        return Boolean(body);
     }
 }
 exports.PaymentRestClient = PaymentRestClient;

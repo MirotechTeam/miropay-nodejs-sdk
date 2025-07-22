@@ -15,11 +15,12 @@ class PrivateKeyAuthenticator {
     // ** =========================== Methods =========================== ** //
     makeSignature(method, relativeUrl, payload) {
         const rawSign = `${method} || ${this.secret} || ${relativeUrl} || ${payload}`;
-        const bufSign = Buffer.from(rawSign, "base64");
-        return (0, node_crypto_1.sign)(null, bufSign, {
+        const bufSign = Buffer.from(rawSign);
+        const signResult = (0, node_crypto_1.sign)(null, bufSign, {
             key: this.encryptedPvKey,
             passphrase: this.secret,
-        }).toString("base64");
+        });
+        return signResult.toString("base64");
     }
     get keyId() {
         return this._secret;

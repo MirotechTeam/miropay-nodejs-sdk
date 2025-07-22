@@ -13,9 +13,15 @@ import {
   ICreatePayment,
   ICreatePaymentResponse,
   IPaymentDetailsResponse,
+  IPublicKeyResponseBody,
+  IPublicKeysResponse,
+  IVerifyPayload,
+  IVerifyPaymentResponse,
+  IVerifyPaymentResponseBody,
 } from "./interface/client.interface";
 import { apiBaseUrl } from "./const/shared.const";
 import { IHttpResponse } from "./interface/shared.interface";
+import jwt, { JwtPayload } from "jsonwebtoken";
 
 export class PaymentRestClient {
   private readonly upstreamVersion: number = 1;
@@ -23,6 +29,8 @@ export class PaymentRestClient {
   private readonly authenticator: PrivateKeyAuthenticator;
   private readonly baseUrl: string = apiBaseUrl;
   private readonly isTest: boolean = true;
+
+  private publicKeys: IPublicKeyResponseBody[] = [];
 
   constructor(key: string, secret: string) {
     this.dispatcher = new Agent({
@@ -63,11 +71,7 @@ export class PaymentRestClient {
     }${path}`;
     const versionedUrl = `${this.baseUrl}${relativeUrl}`;
 
-    const signature = this.authenticator.makeSignature(
-      verb,
-      relativeUrl,
-      requestBody ?? "{}"
-    );
+    const signature = this.authenticator.makeSignature(verb, relativeUrl);
 
     const headers = {
       "x-signature": signature,
@@ -145,6 +149,14 @@ export class PaymentRestClient {
   }
 
   /**
+   * * Get public keys
+   */
+  private async getPublicKeys(): Promise<IPublicKeysResponse> {
+    return this.__call("/get-public-keys", "GET", null);
+  }
+
+  // ** ======================== Public Methods ======================= ** //
+  /**
    * * Get payment by id
    */
   public async getPaymentById(
@@ -164,7 +176,7 @@ export class PaymentRestClient {
       gateways: payload.gateways, // already an array, no need to stringify
       title: payload.title,
       description: payload.description,
-      redirectUrl: payload.redirectUrl,
+      callbackUrl: payload.callbackUrl,
       collectFeeFromCustomer: payload.collectFeeFromCustomer,
       collectCustomerEmail: payload.collectCustomerEmail,
       collectCustomerPhoneNumber: payload.collectCustomerPhoneNumber,
@@ -180,5 +192,54 @@ export class PaymentRestClient {
     referenceCode: string
   ): Promise<ICancelPaymentResponse> {
     return this.__call(`/cancel/${referenceCode}`, "PATCH", null);
+  }
+
+  /**
+   * * Verify
+   */
+  public async verify(
+    payload: IVerifyPayload
+  ): Promise<IVerifyPaymentResponse> {
+    // * Get the keys if not cached
+    if (!this.publicKeys.length) {
+      const { body } = await this.getPublicKeys();
+      this.publicKeys = body as IPublicKeyResponseBody[];
+    }
+
+    // * Expiration
+    let targetKey = this.publicKeys.find((k) => k.id === payload.keyId);
+    if (!targetKey) {
+      const { body } = await this.getPublicKeys();
+      this.publicKeys = body as IPublicKeyResponseBody[];
+      const tempTarget = this.publicKeys.find((k) => k.id === payload.keyId);
+      if (!tempTarget) {
+        throw new Error("Internal server error");
+      }
+      targetKey = tempTarget;
+    }
+
+    // * Empty content
+    if (!payload.content) {
+      throw new Error("Internal sever error");
+    }
+
+    let _result: string | undefined | JwtPayload;
+    jwt.verify(
+      payload.content,
+      targetKey.key,
+      { algorithms: ["ES512"] },
+      (err, result) => {
+        if (err) {
+          throw err;
+        }
+        _result = result;
+      }
+    );
+
+    return {
+      body: _result as IVerifyPaymentResponseBody,
+      headers: {},
+      statusCode: 200,
+    };
   }
 }

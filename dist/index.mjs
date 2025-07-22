@@ -17,9 +17,9 @@ var PrivateKeyAuthenticator = class {
     this._secret = _secret;
   }
   // ** =========================== Methods =========================== ** //
-  makeSignature(method, relativeUrl, payload) {
-    const rawSign = `${method} || ${this.secret} || ${relativeUrl} || ${payload}`;
-    const bufSign = Buffer.from(rawSign);
+  makeSignature(method, relativeUrl) {
+    const rawSign = `${method} || ${this.secret} || ${relativeUrl}`;
+    const bufSign = Buffer.from(rawSign, "base64");
     const signResult = sign(null, bufSign, {
       key: this.encryptedPvKey,
       passphrase: this.secret
@@ -48,12 +48,14 @@ var PrivateKeyAuthenticator = class {
 var apiBaseUrl = "http://localhost:3000";
 
 // src/rest/client.ts
+import jwt from "jsonwebtoken";
 var PaymentRestClient = class {
   upstreamVersion = 1;
   dispatcher;
   authenticator;
   baseUrl = apiBaseUrl;
   isTest = true;
+  publicKeys = [];
   constructor(key, secret) {
     this.dispatcher = new Agent({
       connectTimeout: 10 * 1e3,
@@ -87,11 +89,7 @@ var PaymentRestClient = class {
     const v = `/v${this.upstreamVersion}`;
     const relativeUrl = `${v}/payment/rest/${this.isTest ? "test" : "live"}${path}`;
     const versionedUrl = `${this.baseUrl}${relativeUrl}`;
-    const signature = this.authenticator.makeSignature(
-      verb,
-      relativeUrl,
-      requestBody ?? "{}"
-    );
+    const signature = this.authenticator.makeSignature(verb, relativeUrl);
     const headers = {
       "x-signature": signature,
       "x-id": this.authenticator.keyId,
@@ -145,6 +143,13 @@ var PaymentRestClient = class {
     return secret.includes("test");
   }
   /**
+   * * Get public keys
+   */
+  async getPublicKeys() {
+    return this.__call("/get-public-keys", "GET", null);
+  }
+  // ** ======================== Public Methods ======================= ** //
+  /**
    * * Get payment by id
    */
   async getPaymentById(referenceCode) {
@@ -160,7 +165,7 @@ var PaymentRestClient = class {
       // already an array, no need to stringify
       title: payload.title,
       description: payload.description,
-      redirectUrl: payload.redirectUrl,
+      callbackUrl: payload.callbackUrl,
       collectFeeFromCustomer: payload.collectFeeFromCustomer,
       collectCustomerEmail: payload.collectCustomerEmail,
       collectCustomerPhoneNumber: payload.collectCustomerPhoneNumber
@@ -172,6 +177,45 @@ var PaymentRestClient = class {
    */
   async cancelPayment(referenceCode) {
     return this.__call(`/cancel/${referenceCode}`, "PATCH", null);
+  }
+  /**
+   * * Verify
+   */
+  async verify(payload) {
+    if (!this.publicKeys.length) {
+      const { body } = await this.getPublicKeys();
+      this.publicKeys = body;
+    }
+    let targetKey = this.publicKeys.find((k) => k.id === payload.keyId);
+    if (!targetKey) {
+      const { body } = await this.getPublicKeys();
+      this.publicKeys = body;
+      const tempTarget = this.publicKeys.find((k) => k.id === payload.keyId);
+      if (!tempTarget) {
+        throw new Error("Internal server error");
+      }
+      targetKey = tempTarget;
+    }
+    if (!payload.content) {
+      throw new Error("Internal sever error");
+    }
+    let _result;
+    jwt.verify(
+      payload.content,
+      targetKey.key,
+      { algorithms: ["ES512"] },
+      (err, result) => {
+        if (err) {
+          throw err;
+        }
+        _result = result;
+      }
+    );
+    return {
+      body: _result,
+      headers: {},
+      statusCode: 200
+    };
   }
 };
 

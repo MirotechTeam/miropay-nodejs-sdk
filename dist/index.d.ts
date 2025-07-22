@@ -28,7 +28,7 @@ interface ICreatePayment {
     title: string;
     /** Max 255 characters */
     description: string;
-    redirectUrl: string;
+    callbackUrl: string;
     collectFeeFromCustomer: boolean;
     collectCustomerEmail: boolean;
     collectCustomerPhoneNumber: boolean;
@@ -38,7 +38,7 @@ interface ICreatePaymentResponseBody {
     amount: string;
     paidVia: string | null;
     paidAt: string | null;
-    redirectUrl: string;
+    callbackUrl: string;
     status: PAYMENT_STATUS;
     payoutAmount: string | null;
 }
@@ -49,7 +49,7 @@ interface IPaymentDetailsResponseBody {
     amount: string;
     paidVia: string | null;
     paidAt: string | null;
-    redirectUrl: string;
+    callbackUrl: string;
     status: PAYMENT_STATUS;
     payoutAmount: string | null;
 }
@@ -60,11 +60,22 @@ interface ICancelPaymentResponseBody {
     amount: string;
     paidVia: string | null;
     paidAt: string | null;
-    redirectUrl: string;
+    callbackUrl: string;
     status: PAYMENT_STATUS;
     payoutAmount: string | null;
 }
 interface ICancelPaymentResponse extends IHttpResponse<ICancelPaymentResponseBody> {
+}
+interface IVerifyPayload {
+    keyId: string;
+    content: string | undefined;
+}
+interface IVerifyPaymentResponseBody {
+    referenceCode: string;
+    status: PAYMENT_STATUS;
+    payoutAmount: string | null;
+}
+interface IVerifyPaymentResponse extends IHttpResponse<IVerifyPaymentResponseBody> {
 }
 
 declare class PaymentRestClient {
@@ -73,6 +84,7 @@ declare class PaymentRestClient {
     private readonly authenticator;
     private readonly baseUrl;
     private readonly isTest;
+    private publicKeys;
     constructor(key: string, secret: string);
     /**
      * * Basic api call
@@ -87,6 +99,10 @@ declare class PaymentRestClient {
      */
     private checkIsTest;
     /**
+     * * Get public keys
+     */
+    private getPublicKeys;
+    /**
      * * Get payment by id
      */
     getPaymentById(referenceCode: string): Promise<IPaymentDetailsResponse>;
@@ -98,6 +114,10 @@ declare class PaymentRestClient {
      * * Cancel payment
      */
     cancelPayment(referenceCode: string): Promise<ICancelPaymentResponse>;
+    /**
+     * * Verify
+     */
+    verify(payload: IVerifyPayload): Promise<IVerifyPaymentResponse>;
 }
 
 export { GATEWAY, type ICancelPaymentResponse, type ICreatePayment, type ICreatePaymentResponse, type IPaymentDetailsResponse, PAYMENT_STATUS, PaymentRestClient as default };

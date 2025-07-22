@@ -19,6 +19,10 @@ export declare class PaymentRestClient {
      */
     private checkIsTest;
     /**
+     * * Get public keys
+     */
+    private getPublicKeys;
+    /**
      * * Get payment by id
      */
     getPaymentById(referenceCode: string): Promise<IPaymentDetailsResponse>;
@@ -30,4 +34,8 @@ export declare class PaymentRestClient {
      * * Cancel payment
      */
     cancelPayment(referenceCode: string): Promise<ICancelPaymentResponse>;
+    /**
+     * * Verify
+     */
+    verify(): Promise<boolean>;
 }

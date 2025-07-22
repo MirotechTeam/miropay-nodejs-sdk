@@ -1,7 +1,9 @@
 "use strict";
+var __create = Object.create;
 var __defProp = Object.defineProperty;
 var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
 var __getOwnPropNames = Object.getOwnPropertyNames;
+var __getProtoOf = Object.getPrototypeOf;
 var __hasOwnProp = Object.prototype.hasOwnProperty;
 var __export = (target, all) => {
   for (var name in all)
@@ -15,6 +17,14 @@ var __copyProps = (to, from, except, desc) => {
   }
   return to;
 };
+var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__getProtoOf(mod)) : {}, __copyProps(
+  // If the importer is in node compatibility mode or this is not an ESM
+  // file that has been converted to a CommonJS file using a Babel-
+  // compatible transform (i.e. "__esModule" has not been set), then set
+  // "default" to the CommonJS "module.exports" for node compatibility.
+  isNodeMode || !mod || !mod.__esModule ? __defProp(target, "default", { value: mod, enumerable: true }) : target,
+  mod
+));
 var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
 
 // src/index.ts
@@ -40,9 +50,9 @@ var PrivateKeyAuthenticator = class {
     this._secret = _secret;
   }
   // ** =========================== Methods =========================== ** //
-  makeSignature(method, relativeUrl, payload) {
-    const rawSign = `${method} || ${this.secret} || ${relativeUrl} || ${payload}`;
-    const bufSign = Buffer.from(rawSign);
+  makeSignature(method, relativeUrl) {
+    const rawSign = `${method} || ${this.secret} || ${relativeUrl}`;
+    const bufSign = Buffer.from(rawSign, "base64");
     const signResult = (0, import_node_crypto.sign)(null, bufSign, {
       key: this.encryptedPvKey,
       passphrase: this.secret
@@ -71,12 +81,14 @@ var PrivateKeyAuthenticator = class {
 var apiBaseUrl = "http://localhost:3000";
 
 // src/rest/client.ts
+var import_jsonwebtoken = __toESM(require("jsonwebtoken"));
 var PaymentRestClient = class {
   upstreamVersion = 1;
   dispatcher;
   authenticator;
   baseUrl = apiBaseUrl;
   isTest = true;
+  publicKeys = [];
   constructor(key, secret) {
     this.dispatcher = new import_undici.Agent({
       connectTimeout: 10 * 1e3,
@@ -110,11 +122,7 @@ var PaymentRestClient = class {
     const v = `/v${this.upstreamVersion}`;
     const relativeUrl = `${v}/payment/rest/${this.isTest ? "test" : "live"}${path}`;
     const versionedUrl = `${this.baseUrl}${relativeUrl}`;
-    const signature = this.authenticator.makeSignature(
-      verb,
-      relativeUrl,
-      requestBody ?? "{}"
-    );
+    const signature = this.authenticator.makeSignature(verb, relativeUrl);
     const headers = {
       "x-signature": signature,
       "x-id": this.authenticator.keyId,
@@ -168,6 +176,13 @@ var PaymentRestClient = class {
     return secret.includes("test");
   }
   /**
+   * * Get public keys
+   */
+  async getPublicKeys() {
+    return this.__call("/get-public-keys", "GET", null);
+  }
+  // ** ======================== Public Methods ======================= ** //
+  /**
    * * Get payment by id
    */
   async getPaymentById(referenceCode) {
@@ -183,7 +198,7 @@ var PaymentRestClient = class {
       // already an array, no need to stringify
       title: payload.title,
       description: payload.description,
-      redirectUrl: payload.redirectUrl,
+      callbackUrl: payload.callbackUrl,
       collectFeeFromCustomer: payload.collectFeeFromCustomer,
       collectCustomerEmail: payload.collectCustomerEmail,
       collectCustomerPhoneNumber: payload.collectCustomerPhoneNumber
@@ -195,6 +210,45 @@ var PaymentRestClient = class {
    */
   async cancelPayment(referenceCode) {
     return this.__call(`/cancel/${referenceCode}`, "PATCH", null);
+  }
+  /**
+   * * Verify
+   */
+  async verify(payload) {
+    if (!this.publicKeys.length) {
+      const { body } = await this.getPublicKeys();
+      this.publicKeys = body;
+    }
+    let targetKey = this.publicKeys.find((k) => k.id === payload.keyId);
+    if (!targetKey) {
+      const { body } = await this.getPublicKeys();
+      this.publicKeys = body;
+      const tempTarget = this.publicKeys.find((k) => k.id === payload.keyId);
+      if (!tempTarget) {
+        throw new Error("Internal server error");
+      }
+      targetKey = tempTarget;
+    }
+    if (!payload.content) {
+      throw new Error("Internal sever error");
+    }
+    let _result;
+    import_jsonwebtoken.default.verify(
+      payload.content,
+      targetKey.key,
+      { algorithms: ["ES512"] },
+      (err, result) => {
+        if (err) {
+          throw err;
+        }
+        _result = result;
+      }
+    );
+    return {
+      body: _result,
+      headers: {},
+      statusCode: 200
+    };
   }
 };
 

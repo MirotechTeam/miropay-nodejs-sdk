@@ -15,7 +15,7 @@ export interface ICreatePayment {
   /** Max 255 characters */
   description: string;
 
-  redirectUrl: string;
+  callbackUrl: string;
   collectFeeFromCustomer: boolean;
   collectCustomerEmail: boolean;
   collectCustomerPhoneNumber: boolean;
@@ -26,7 +26,7 @@ interface ICreatePaymentResponseBody {
   amount: string;
   paidVia: string | null;
   paidAt: string | null;
-  redirectUrl: string;
+  callbackUrl: string;
   status: PAYMENT_STATUS;
   payoutAmount: string | null;
 }
@@ -40,7 +40,7 @@ interface IPaymentDetailsResponseBody {
   amount: string;
   paidVia: string | null;
   paidAt: string | null;
-  redirectUrl: string;
+  callbackUrl: string;
   status: PAYMENT_STATUS;
   payoutAmount: string | null;
 }
@@ -54,10 +54,36 @@ interface ICancelPaymentResponseBody {
   amount: string;
   paidVia: string | null;
   paidAt: string | null;
-  redirectUrl: string;
+  callbackUrl: string;
   status: PAYMENT_STATUS;
   payoutAmount: string | null;
 }
 
 export interface ICancelPaymentResponse
   extends IHttpResponse<ICancelPaymentResponseBody> {}
+
+// ** ========================= Get Api Keys ======================== ** //
+export interface IPublicKeyResponseBody {
+  id: string;
+  key: string;
+}
+
+export interface IPublicKeysResponse
+  extends IHttpResponse<IPublicKeyResponseBody[]> {}
+
+// ** ============================ Verify =========================== ** //
+export interface IVerifyPayload {
+  keyId: string;
+  content: string | undefined;
+}
+
+export interface IVerifyPaymentResponseBody {
+  referenceCode: string;
+
+  status: PAYMENT_STATUS;
+
+  payoutAmount: string | null;
+}
+
+export interface IVerifyPaymentResponse
+  extends IHttpResponse<IVerifyPaymentResponseBody> {}

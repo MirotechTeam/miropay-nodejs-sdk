@@ -12,11 +12,10 @@ export class PrivateKeyAuthenticator implements IAuthenticator {
   // ** =========================== Methods =========================== ** //
   public makeSignature(
     method: Dispatcher.HttpMethod,
-    relativeUrl: string,
-    payload: object | string
+    relativeUrl: string
   ): string {
-    const rawSign = `${method} || ${this.secret} || ${relativeUrl} || ${payload}`;
-    const bufSign = Buffer.from(rawSign);
+    const rawSign = `${method} || ${this.secret} || ${relativeUrl}`;
+    const bufSign = Buffer.from(rawSign, "base64");
 
     const signResult = sign(null, bufSign, {
       key: this.encryptedPvKey,

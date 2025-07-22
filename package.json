@@ -25,12 +25,14 @@
     "build": "tsup src/index.ts --format esm,cjs --dts"
   },
   "devDependencies": {
+    "@types/jsonwebtoken": "^9.0.10",
     "@types/node": "^24.0.10",
     "javascript-obfuscator": "^4.1.1",
     "tsup": "^8.5.0",
     "typescript": "^5.8.3"
   },
   "dependencies": {
+    "jsonwebtoken": "^9.0.2",
     "undici": "^7.11.0"
   }
 }
