@@ -176,7 +176,7 @@ export class PaymentRestClient {
       gateways: payload.gateways, // already an array, no need to stringify
       title: payload.title,
       description: payload.description,
-      callbackUrl: payload.callbackUrl,
+      redirectUrl: payload.redirectUrl,
       collectFeeFromCustomer: payload.collectFeeFromCustomer,
       collectCustomerEmail: payload.collectCustomerEmail,
       collectCustomerPhoneNumber: payload.collectCustomerPhoneNumber,

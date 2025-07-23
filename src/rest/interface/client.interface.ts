@@ -15,7 +15,7 @@ export interface ICreatePayment {
   /** Max 255 characters */
   description: string;
 
-  callbackUrl: string;
+  redirectUrl: string; // TODO: Must be changed to callbackUrl
   collectFeeFromCustomer: boolean;
   collectCustomerEmail: boolean;
   collectCustomerPhoneNumber: boolean;

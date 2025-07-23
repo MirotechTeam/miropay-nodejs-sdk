@@ -78,7 +78,7 @@ var PrivateKeyAuthenticator = class {
 };
 
 // src/rest/const/shared.const.ts
-var apiBaseUrl = "https://api-mp.tadilo.com";
+var apiBaseUrl = "http://localhost:3000";
 
 // src/rest/client.ts
 var import_jsonwebtoken = __toESM(require("jsonwebtoken"));
@@ -198,7 +198,7 @@ var PaymentRestClient = class {
       // already an array, no need to stringify
       title: payload.title,
       description: payload.description,
-      callbackUrl: payload.callbackUrl,
+      redirectUrl: payload.redirectUrl,
       collectFeeFromCustomer: payload.collectFeeFromCustomer,
       collectCustomerEmail: payload.collectCustomerEmail,
       collectCustomerPhoneNumber: payload.collectCustomerPhoneNumber
