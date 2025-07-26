@@ -78,7 +78,7 @@ var PrivateKeyAuthenticator = class {
 };
 
 // src/rest/const/shared.const.ts
-var apiBaseUrl = "http://localhost:3000";
+var apiBaseUrl = "https://api-mp.tadilo.com";
 
 // src/rest/client.ts
 var import_jsonwebtoken = __toESM(require("jsonwebtoken"));

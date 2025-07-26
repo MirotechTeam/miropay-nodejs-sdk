@@ -38,7 +38,7 @@ interface ICreatePaymentResponseBody {
     amount: string;
     paidVia: string | null;
     paidAt: string | null;
-    callbackUrl: string;
+    redirectUrl: string;
     status: PAYMENT_STATUS;
     payoutAmount: string | null;
 }

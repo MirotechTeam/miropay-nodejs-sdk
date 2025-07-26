@@ -203,14 +203,14 @@ export class PaymentRestClient {
     // * Get the keys if not cached
     if (!this.publicKeys.length) {
       const { body } = await this.getPublicKeys();
-      this.publicKeys = body as IPublicKeyResponseBody[];
+      this.publicKeys = body;
     }
 
     // * Expiration
     let targetKey = this.publicKeys.find((k) => k.id === payload.keyId);
     if (!targetKey) {
       const { body } = await this.getPublicKeys();
-      this.publicKeys = body as IPublicKeyResponseBody[];
+      this.publicKeys = body;
       const tempTarget = this.publicKeys.find((k) => k.id === payload.keyId);
       if (!tempTarget) {
         throw new Error("Internal server error");
