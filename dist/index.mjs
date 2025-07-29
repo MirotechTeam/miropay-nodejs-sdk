@@ -19,7 +19,7 @@ var PrivateKeyAuthenticator = class {
   // ** =========================== Methods =========================== ** //
   makeSignature(method, relativeUrl) {
     const rawSign = `${method} || ${this.secret} || ${relativeUrl}`;
-    const bufSign = Buffer.from(rawSign, "base64");
+    const bufSign = Buffer.from(rawSign, "utf-8");
     const signResult = sign(null, bufSign, {
       key: this.encryptedPvKey,
       passphrase: this.secret
