@@ -171,6 +171,11 @@ export class PaymentRestClient {
   public async createPayment(
     payload: ICreatePayment
   ): Promise<ICreatePaymentResponse> {
+    const amount = payload.amount;
+    if (!Number.isInteger(amount)) {
+      throw new Error("Amount must be an integer");
+    }
+
     const jsonPayload = {
       amount: payload.amount,
       gateways: payload.gateways, // already an array, no need to stringify
