@@ -1,1 +1,1 @@
-export const apiBaseUrl = "https://api-mp.tadilo.com";
+export const apiBaseUrl = "https://api.pallawan.com";
