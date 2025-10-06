@@ -109,9 +109,11 @@ export class PaymentRestClient {
           statusCode: res.statusCode,
         };
       } catch (parseError) {
+        console.error("Failed to parse response JSON:", parseError);
         throw parseError;
       }
     } catch (err) {
+      console.error(err);
       throw err;
     }
   }
