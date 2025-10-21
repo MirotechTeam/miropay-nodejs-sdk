@@ -161,10 +161,6 @@ var PaymentRestClient = class {
    * * Create payment
    */
   async createPayment(payload) {
-    const amount = payload.amount;
-    if (!Number.isInteger(amount)) {
-      throw new Error("Amount must be an integer");
-    }
     const jsonPayload = {
       amount: payload.amount,
       gateways: payload.gateways,
