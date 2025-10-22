@@ -1,0 +1,14 @@
+version: "3.8"
+
+services:
+  test-sdk:
+    container_name: test-node-sdk
+    image: node:24-alpine
+    volumes:
+      - ./:/app
+    working_dir: /app
+    ports:
+      - "3000:3000"
+    command: sh -c "chmod +x ./pre-test.sh && ./pre-test.sh"
+    env_file:
+      - .env
