@@ -27,12 +27,12 @@ export class PaymentRestClient {
   private readonly upstreamVersion: number = 1;
   private readonly dispatcher: Dispatcher;
   private readonly authenticator: PrivateKeyAuthenticator;
-  private readonly baseUrl: string = apiBaseUrl;
+  private readonly baseUrl: string;
   private readonly isTest: boolean = true;
 
   private publicKeys: IPublicKeyResponseBody[] = [];
 
-  constructor(key: string, secret: string) {
+  constructor(key: string, secret: string, baseUrl?: string) {
     this.dispatcher = new Agent({
       connectTimeout: 10 * 1000, // 10 seconds
       factory: (_origin: string, opts: Agent.Options): Dispatcher => {
@@ -54,6 +54,7 @@ export class PaymentRestClient {
 
     this.authenticator = new PrivateKeyAuthenticator(key, secret);
     this.isTest = this.checkIsTest(secret);
+    this.baseUrl = baseUrl ? baseUrl : apiBaseUrl;
   }
 
   // ** ======================== Basic Methods ======================== ** //

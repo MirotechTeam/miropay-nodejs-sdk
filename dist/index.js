@@ -86,10 +86,10 @@ var PaymentRestClient = class {
   upstreamVersion = 1;
   dispatcher;
   authenticator;
-  baseUrl = apiBaseUrl;
+  baseUrl;
   isTest = true;
   publicKeys = [];
-  constructor(key, secret) {
+  constructor(key, secret, baseUrl) {
     this.dispatcher = new import_undici.Agent({
       connectTimeout: 10 * 1e3,
       // 10 seconds
@@ -113,6 +113,7 @@ var PaymentRestClient = class {
     );
     this.authenticator = new PrivateKeyAuthenticator(key, secret);
     this.isTest = this.checkIsTest(secret);
+    this.baseUrl = baseUrl ? baseUrl : apiBaseUrl;
   }
   // ** ======================== Basic Methods ======================== ** //
   /**

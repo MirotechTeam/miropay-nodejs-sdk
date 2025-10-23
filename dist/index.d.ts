@@ -90,7 +90,7 @@ declare class PaymentRestClient {
     private readonly baseUrl;
     private readonly isTest;
     private publicKeys;
-    constructor(key: string, secret: string);
+    constructor(key: string, secret: string, baseUrl?: string);
     /**
      * * Basic api call
      */
