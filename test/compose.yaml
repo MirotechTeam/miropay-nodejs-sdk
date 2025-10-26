@@ -1,0 +1,23 @@
+version: "3.8"
+
+services:
+  test-sdk:
+    container_name: test-node-sdk
+    image: node:24-alpine
+    volumes:
+      - ./.env:/app/.env
+      - ./index.js:/app/index.js
+      - ./run.sh:/app/run.sh
+      - ./server.js:/app/server.js
+    working_dir: /app
+    ports:
+      - "3006:3000"
+    command: |
+      sh -c "
+        npm init --yes
+        npm set init.type module 
+        npm i dotenv express
+        node ./server.js
+      "
+    env_file:
+      - .env
