@@ -54,7 +54,7 @@ export class PaymentRestClient {
 
     this.authenticator = new PrivateKeyAuthenticator(key, secret);
     this.isTest = this.checkIsTest(secret);
-    this.baseUrl = baseUrl ? baseUrl : apiBaseUrl;
+    this.baseUrl = baseUrl ?? apiBaseUrl;
   }
 
   // ** ======================== Basic Methods ======================== ** //
